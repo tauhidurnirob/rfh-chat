@@ -1,0 +1,38 @@
+.overlay {
+    width: 100%;
+    height: 100%;
+    background: rgb(7 0 255 / 14%);
+    position: relative;
+}
+.login {
+    width: 500px;
+    height: 350px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #ffffff;
+    box-shadow: inset 0px 0px 12px rgba(0, 0, 0, 0.0982845);
+    box-sizing: border-box;
+    padding: 60px;
+}
+.input {
+    width: 100%;
+    height: 30px;
+    border: 1px solid #636e72;
+    outline: none;
+    margin: 0 0 30px;
+    font-size: 18px;
+}
+.login_btn {
+    width: 100%;
+    height: 40px;
+    font-size: 20px;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    background: rgba(75, 132, 243, 1);
+    font-weight: bold;
+    color: #ffffff;
+    margin-top: 20px;
+}
