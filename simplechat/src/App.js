@@ -5,11 +5,21 @@ import Login from './Login';
 import Axios from 'axios';
 
 import worker from 'worker-loader!./worker'; // eslint-disable-line import/no-webpack-loader-syntax
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { ReactQueryDevtools } from "react-query/devtools";
 
-function App() {
+const App = () => {
   const [isAuth, setIsAuth] = useState(false);
 
   const workerInstance = worker();
+
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: Infinity
+      }
+    }
+  });
 
   const loginHandler = (name, pass) => {
     Axios({
@@ -55,13 +65,17 @@ function App() {
   }, [])
 
   return (
-    <div className="App">
-      {
-        isAuth ?
-        <Chat logOutClicked = {logOutHandler} worker = {workerInstance} />
-        : <Login loginClicked = {loginHandler} />
-      }
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <div className="App">
+        {
+          isAuth ?
+          <Chat logOutClicked = {logOutHandler} worker = {workerInstance} />
+          : <Login loginClicked = {loginHandler} />
+        }
+        <ReactQueryDevtools initialIsOpen />
+      </div>
+    </QueryClientProvider>
+    
   );
 }
 

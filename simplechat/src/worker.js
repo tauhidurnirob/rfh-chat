@@ -12,18 +12,22 @@ onmessage = e => {
     else if(e.data.op === 'close') {
         ws.close();
     }
+    else if(e.data.op === 'clear') {
+        ws.send(JSON.stringify(e.data.value));
+    }
     else if (e.data.op === 'add') {
         ws.send(JSON.stringify(e.data.value));
         ws.onmessage = msg => {
             console.log("getMessage", msg.data);
             let data = JSON.parse(msg.data);
-            db.comments.add({
-                text: data.cmnt
-            }).then(()=> {
-                postMessage(msg.data);
-            }).catch((err)=> {
-                window.alert(err);
-            })
+            postMessage(msg.data);
+            // db.comments.add({
+            //     text: data.cmnt
+            // }).then(()=> {
+            //     postMessage(msg.data);
+            // }).catch((err)=> {
+            //     window.alert(err);
+            // })
         };
     }
 }

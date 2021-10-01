@@ -6,8 +6,22 @@ const LocalStrategy = require('passport-local').Strategy;
 const bodyParser = require('body-parser');
 const session = require('express-session');
 
+const mongoose = require('mongoose');
+
 const WebSocket = require('ws');
 const SocketServer = require('ws').Server;
+
+mongoose.connect('mongodb+srv://simpleChat:teLn0q5VcXG41NzU@cluster0.msuee.mongodb.net/myFirstDatabase?retryWrites=true&w=majority').then(()=> {
+    console.log('connected');
+}).catch((err)=> {
+    console.log('database not connected' + err);
+})
+
+var cmntSchema = new mongoose.Schema({
+    cmnt : {type : String, default : '',},
+  });
+  
+const Comment = mongoose.model('Comment', cmntSchema);
 
 var users = [{"id":111, "username":"any", "password":"any"}];
  
@@ -75,6 +89,17 @@ app.get('/logout', function(req, res) {
     res.send('logout success!');
 });
 
+app.get("/comments", function (req, res) {
+    console.log('getting all comments');
+    Comment.find({}).exec(function(err, cmnts){
+        if(err) {
+            res.send('error has occured');
+        } else {
+            console.log(cmnts);
+            res.json(cmnts);
+        }
+    });
+});
 
 const server = app.listen(3000, () => {
     console.log('Server started at 3000..');
@@ -95,8 +120,22 @@ wss.on('connection', (ws) => {
         try {
         data = JSON.parse(message);
         console.log(data)
-        if(data.type === 'DISCUSSION_COMMENT_ADD_COMMAND') {
+        if (data === 'clear') {
+            Comment.deleteMany({}, () => {
+                console.log('items deleted')
+            });
+        }
+        else if(data.type === 'DISCUSSION_COMMENT_ADD_COMMAND') {
             data['type'] = 'DISCUSSION_COMMENT_ADDED_EVENT'
+            var comment = new Comment();
+            comment.cmnt = data['cmnt'];
+            comment.save(function(err, cmnt){
+                if(err) {
+                    res.send('error saving comment');
+                } else {
+                    console.log(cmnt);
+                }
+            });
         }
         } catch (e) {
         sendError(ws, 'Wrong format');
@@ -108,10 +147,11 @@ wss.on('connection', (ws) => {
             if (client.readyState === WebSocket.OPEN) {
                 let obj = {command: data.type, cmnt: data.cmnt, uuid: data.uuid};
                 
-                let delay = 3000;
-                setTimeout(() => {
-                    client.send(JSON.stringify(obj));
-                }, delay);
+                // let delay = 3000;
+                // setTimeout(() => {
+                //     client.send(JSON.stringify(obj));
+                // }, delay);
+                client.send(JSON.stringify(obj));
             }
         });
     });
