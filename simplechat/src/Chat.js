@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useQueryClient } from 'react-query';
 
 import classes from './Chat.module.css';
@@ -10,46 +10,56 @@ import db from './Dexie/db';
 import InputField from './InputField';
 import { useCmnts } from './Queries';
 import { useComments } from './SweetState/SweetState';
+import { v4 as uuidv4 } from 'uuid';
+import { useAppState } from './SweetState/appState';
+import { useAuthState } from './SweetState/authState';
+import { useNavigate } from 'react-router';
+import { getCookie } from './CustomMethods';
 
 const Chat = (props) => {
+    const [appState] = useAppState();
+    const [authState, authActions] = useAuthState();
     const [state, actions] = useComments();
-    
-    const { v4: uuidv4 } = require('uuid');
 
     const commandQueqe = useRef([]);
 
-    const workerInstance = props.worker;
-
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
 
     const handleKey = (inputVal) => {
-        let uuid = uuidv4();
-        let obj = {type: 'DISCUSSION_COMMENT_ADD_COMMAND', cmnt: inputVal, uuid: uuid};
-        workerInstance.postMessage({op:'add', value: obj});
-        commandQueqe.current.push(obj);
-        console.log(commandQueqe.current);
+        // let uuid = uuidv4();
+        // let obj = {type: 'DISCUSSION_COMMENT_ADD_COMMAND', cmnt: inputVal, uuid: uuid};
+        // workerInstance.postMessage({op:'add', value: obj});
+        // commandQueqe.current.push(obj);
+        // console.log(commandQueqe.current);
+        props.worker.postMessage({
+            op: 'sendCommand',
+            command:  {
+                "type" : "DISCUSSION_COMMENT_CREATE_COMMAND",
+                "commandId" : uuidv4(),
+                "discussionId" : "e57fe12c-091d-4a91-9662-603fa80e7394",
+                "comment" : inputVal
+            } 
+        });
     }
 
-    workerInstance.onmessage = e => {
-        let data = JSON.parse(e.data);
-        commandQueqe.current = commandQueqe.current.filter(f => f.uuid !== data.uuid);
-        // db.comments.toArray().then((cmnts) => {
-        //     actions.setStore(cmnts);
-        // }).catch((error)=> {
-        // alert ("Ooops: " + error);
-        // })
-        // queryClient.setQueriesData(["msgs"], (oldData) => {
-        //     const update = (entity) =>
-        //       entity.id === data.id ? { ...entity, ...data.payload } : entity
-        //     return Array.isArray(oldData) ? oldData.map(update) : update(oldData)
-        //   })
-        queryClient.refetchQueries();
-        console.log(data.cmnt);
-        console.log(commandQueqe.current);
+    const logOutHandler  = () => {
+        authActions.logOut();
+        navigate('/login');
     }
+    console.log(getCookie('sessionId'))
+    useEffect(()=> {
+        if(authState.loggedIn) {
+            props.worker.postMessage({
+                op: 'reConnect',
+                sessionId: getCookie('sessionId')
+            });
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const clearClicked = () => {
-        workerInstance.postMessage({op:'add', value: 'clear'});
+        // workerInstance.postMessage({op:'add', value: 'clear'});
     }
     // db.comments.clear()
 
@@ -59,27 +69,12 @@ const Chat = (props) => {
     // console.log(comments)
     // if (!comments) return null;
 
-    // useEffect(()=> {
-    //     db.comments.toArray().then((cmnts) => {
-    //       actions.setStore(cmnts);
-    //     }).catch((error)=> {
-    //       alert ("Ooops: " + error);
-    //     })
-    // // eslint-disable-next-line react-hooks/exhaustive-deps
-    // },[])
 
-    useEffect(() => {
-        workerInstance.postMessage({op:'connect'});
-    
-        return () => { workerInstance.postMessage({op:'close'}); }
-    },[workerInstance]);
-
-    const { isLoading, error, data } = useCmnts();
-
+    // const { isLoading, error, data } = useCmnts();
     return(
         <div className={classes.wrapper}>
             <div className={classes.chat_area}>
-            {
+                {/* {
                 isLoading ?
                 <p>Loading...</p>
                 : error ?
@@ -88,10 +83,17 @@ const Chat = (props) => {
                 data?.map((a, index) => (
                     <h1 key={index}>{a.cmnt}</h1>
                 ))
+                } */}
+                {
+                    appState.comments?.map((a, index) => {
+                        return(
+                            <h1 key={index}>{a.comment}</h1>
+                        );
+                    })
                 }
             </div>
             <InputField handleKey={handleKey} />
-            <button onClick={props.logOutClicked}>LOG OUT</button>
+            <button onClick={logOutHandler}>LOG OUT</button>
             <button onClick={clearClicked}>Clear</button>
         </div>
     );

@@ -12,7 +12,7 @@ const InputField = (props) => {
 
     const handleKey = (event) => {
         if (event.code === "Enter" || event.code === "NumpadEnter") {
-            props.handleKey(inputVal);
+            props.handleKey(event.target.value);
             setInputVal('');
         }
     }

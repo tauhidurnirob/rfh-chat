@@ -6,15 +6,15 @@ const Store = createStore({
   },
   actions: {
     setStore: (newState) => ({ setState }) => {
-        setState({
-            cmnts: newState
-        });
+      setState({
+        cmnts: newState
+      });
     },
     setCmnts: (newState) => ({ setState, getState }) => {
-        const { cmnts } = getState();
-        setState({
-          cmnts: [...cmnts, newState]
-        });
+      const { cmnts } = getState();
+      setState({
+        cmnts: [...cmnts, newState]
+      });
     },
     // removeItems: (id) => ({ setState, getState }) => {
     //     let { items } = getState();
